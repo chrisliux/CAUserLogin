@@ -41,6 +41,37 @@ public class LoginInteractorTest {
         interactor.execute(inputData);
     }
 
+    // New Test: Verify the current user is correctly tracked
+    @Test
+    public void successUserLoggedInTest() {
+        LoginInputData inputData = new LoginInputData("Paul", "password");
+        LoginUserDataAccessInterface userRepository = new InMemoryUserDataAccessObject();
+
+        UserFactory factory = new CommonUserFactory();
+        User user = factory.create("Paul", "password");
+        userRepository.save(user);
+
+        // Check that no user is logged in initially
+        assertNull("No user should be logged in initially.", userRepository.getCurrentUser());
+
+        LoginOutputBoundary successPresenter = new LoginOutputBoundary() {
+            @Override
+            public void prepareSuccessView(LoginOutputData user) {
+                assertEquals("Paul", user.getUsername());
+            }
+
+            @Override
+            public void prepareFailView(String error) {
+                fail("Use case failure is unexpected.");
+            }
+        };
+
+        LoginInputBoundary interactor = new LoginInteractor(userRepository, successPresenter);
+        interactor.execute(inputData);
+
+        // Verify that the logged-in user is now "Paul"
+        assertEquals("Paul", userRepository.getCurrentUser());
+    }
 
     @Test
     public void failurePasswordMismatchTest() {
